@@ -1,6 +1,6 @@
 import { type PrismaClient } from "@prisma/client"
 import { type Express } from "express"
-//import duenosRoutes from "./duenos"
+import userRoutes from "./user"
 //import mascotasRoutes from "./mascotas"
 
 const addRoutes = (app: Express, prisma: PrismaClient) => {
@@ -10,7 +10,7 @@ const addRoutes = (app: Express, prisma: PrismaClient) => {
 
   
     // Acá van tus custom routers
-    //app.use('/duenos/', duenosRoutes(prisma))
+    app.use('/user/', userRoutes(prisma))
     //app.use('/mascotas/', mascotasRoutes(prisma))
 }
 
