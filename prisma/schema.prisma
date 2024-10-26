@@ -16,4 +16,12 @@ model User {
   name     String
   surname  String
   password String
+  products UserProduct[]
+}
+
+model UserProduct {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  productId Int
+  user      User   @relation(fields: [userId], references: [id])
 }
