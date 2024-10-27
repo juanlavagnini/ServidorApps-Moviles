@@ -9,11 +9,12 @@ const userProductRoutes = (prisma: PrismaClient) => {
     })
     router.post('/addProduct', async (req, res) => {
         console.log(req.body)
-        const { userId, productId } = req.body
+        const { userId, productId, name } = req.body
         const newProduct = await prisma.userProduct.create({
             data: {
                 userId,
-                productId
+                productId,
+                name
             }
         })
         res.json(newProduct)
