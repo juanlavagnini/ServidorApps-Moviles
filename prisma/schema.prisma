@@ -8,18 +8,29 @@ datasource db {
 }
 
 model User {
-  id       Int           @id @default(autoincrement())
-  email    String        @unique
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
   name     String
   surname  String
   password String
-  products UserProduct[]
+  house    House?   @relation(fields: [houseId], references: [id])
+  houseId  Int ?    
+  ownedHouse House? @relation("HouseOwner") 
 }
 
-model UserProduct {
-  id        Int  @id @default(autoincrement())
-  userId    Int
+model House {
+  id        Int           @id @default(autoincrement())
+  name      String
+  owner     User?         @relation("HouseOwner", fields: [ownerId], references: [id]) 
+  ownerId   Int?          @unique // La casa tiene solo un propietario
+  members   User[]        
+  products  houseProduct[]     // Lista de productos asociados a la casa
+}
+
+model houseProduct {
+  id        Int           @id @default(autoincrement())
+  name      String
   productId String
-  name      String @default("Fake")
-  user      User @relation(fields: [userId], references: [id])
+  house     House?         @relation(fields: [houseId], references: [id]) 
+  houseId   Int?       
 }
