@@ -31,6 +31,7 @@ model houseProduct {
   id        Int           @id @default(autoincrement())
   name      String
   productId String
-  house     House?         @relation(fields: [houseId], references: [id]) 
-  houseId   Int?       
+  house     House?        @relation(fields: [houseId], references: [id]) 
+  houseId   Int?   
+  quantity  Int           @default(0)    
 }

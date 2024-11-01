@@ -30,6 +30,9 @@ const userRoutes = (prisma: PrismaClient) => {
             where: {
                 email,
                 password
+            },
+            include: {
+                ownedHouse: true
             }
         })
         if (user) {

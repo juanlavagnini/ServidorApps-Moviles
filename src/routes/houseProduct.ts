@@ -10,14 +10,37 @@ const houseProductRoutes = (prisma: PrismaClient) => {
     router.post('/addProduct', async (req, res) => {
         console.log(req.body)
         const {productId, name, houseId } = req.body
-        const newProduct = await prisma.houseProduct.create({
-            data: {
+        //Si el producto ya existe en la casa, aumentar la cantidad
+        const existingProduct = await prisma.houseProduct.findFirst({
+            where: {
                 houseId,
-                productId,
-                name
+                productId
             }
         })
-        res.json(newProduct)
+        if (existingProduct) {
+            const updatedProduct = await prisma.houseProduct.update({
+                where: {
+                    id: existingProduct.id
+                },
+                data: {
+                    quantity: existingProduct.quantity + 1
+                }
+            })
+            res.json(updatedProduct)
+        }
+        else {
+        //Si no existe, crearlo
+          const newProduct = await prisma.houseProduct.create({
+              data: {
+                  houseId,
+                  productId,
+                  name,
+                  quantity: 1
+              }
+          })
+
+          res.json(newProduct)
+      }
     })
 
     router.get('/products/:houseId', async (req, res) => {
