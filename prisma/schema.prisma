@@ -33,5 +33,6 @@ model houseProduct {
   productId String
   house     House?        @relation(fields: [houseId], references: [id]) 
   houseId   Int?   
-  quantity  Int           @default(0)    
+  quantity  Int           @default(0)
+  minumim   Int           @default(0)    
 }
