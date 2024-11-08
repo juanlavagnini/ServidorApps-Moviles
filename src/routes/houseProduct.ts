@@ -43,6 +43,42 @@ const houseProductRoutes = (prisma: PrismaClient) => {
       }
     })
 
+    router.post('/deleteProduct', async (req, res) => {
+        console.log(req.body)
+        const {productId, name, houseId } = req.body
+        //disminuir en 1 la cantidad del producto
+        const existingProduct = await prisma.houseProduct.findFirst({
+            where: {
+                houseId,
+                productId
+            }
+        })
+        if (existingProduct) {
+            if (existingProduct.quantity > 1) {
+                const updatedProduct = await prisma.houseProduct.update({
+                    where: {
+                        id: existingProduct.id
+                    },
+                    data: {
+                        quantity: existingProduct.quantity - 1
+                    }
+                })
+                res.json(updatedProduct)
+            }
+            else {
+                const deletedProduct = await prisma.houseProduct.delete({
+                    where: {
+                        id: existingProduct.id
+                    }
+                })
+                res.json(deletedProduct)
+            }
+        }
+        else {
+            res.json({error: "El producto no existe en la casa"})
+        }
+    })
+
     router.get('/products/:houseId', async (req, res) => {
         const { houseId } = req.params
         const dueno = await prisma.houseProduct.findMany({
