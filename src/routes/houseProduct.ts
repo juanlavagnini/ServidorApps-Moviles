@@ -88,6 +88,31 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         })
         res.json(dueno)
       })    
+
+    router.post('/updateMinimum', async (req, res) => {
+        const { houseId, productId, minimum } = req.body
+        const existingProduct = await prisma.houseProduct.findFirst({
+            where: {
+                houseId,
+                productId
+            }
+        })
+        if (existingProduct) {
+            const updatedProduct = await prisma.houseProduct.update({
+                where: {
+                    id: existingProduct.id
+                },
+                data: {
+                    minimum: minimum
+                }
+            })
+            res.json(updatedProduct)
+        }
+        else {
+            res.json({error: "El producto no existe en la casa"})
+        }
+    })
+
     return router
 }
 
