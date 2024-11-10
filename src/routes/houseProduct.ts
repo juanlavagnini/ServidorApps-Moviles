@@ -89,6 +89,17 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         res.json(dueno)
       })    
 
+    router.get('/product/:houseId/:productId', async (req, res) => {
+        const { houseId, productId } = req.params
+        const dueno = await prisma.houseProduct.findFirst({
+          where: {
+            houseId: parseInt(houseId),
+            productId: productId
+          }
+        })
+        res.json(dueno)
+      })
+
     router.post('/updateMinimum', async (req, res) => {
         const { houseId, productId, minimum } = req.body
         const existingProduct = await prisma.houseProduct.findFirst({
