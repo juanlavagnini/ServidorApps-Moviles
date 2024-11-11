@@ -30,9 +30,11 @@ model House {
 model houseProduct {
   id        Int           @id @default(autoincrement())
   name      String
+  brand     String        @default("")
   productId String
   house     House?        @relation(fields: [houseId], references: [id]) 
   houseId   Int?   
   quantity  Int           @default(0)
   minimum   Int           @default(0)    
+  hasAlert  Boolean       @default(false)
 }
