@@ -100,8 +100,9 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         res.json(dueno)
       })
 
-    router.post('/updateMinimum', async (req, res) => {
+    router.post('/updateAlert', async (req, res) => {
         const { houseId, productId, minimum } = req.body
+       console.log(minimum)
         const existingProduct = await prisma.houseProduct.findFirst({
             where: {
                 houseId,
@@ -114,16 +115,55 @@ const houseProductRoutes = (prisma: PrismaClient) => {
                     id: existingProduct.id
                 },
                 data: {
-                    minimum: minimum
+                    minimum: minimum,
+                    hasAlert : true
                 }
             })
             res.json(updatedProduct)
+        } else {
+            res.status(404).json({ error: "Product not found" })
         }
-        else {
-            res.json({error: "El producto no existe en la casa"})
         }
-    })
+    )
 
+    router.post('/removeAlert', async (req, res) => {
+        const { houseId, productId } = req.body
+        const existingProduct = await prisma.houseProduct.findFirst({
+            where: {
+                houseId,
+                productId
+            }
+        })
+        if (existingProduct) {
+            const updatedProduct = await prisma.houseProduct.update({
+                where: {
+                    id: existingProduct.id
+                },
+                data: {
+                    minimum: 0,
+                    hasAlert : false
+                }
+            })
+            res.json(updatedProduct)
+        } else {
+            res.status(404).json({ error: "Product not found" })
+        }
+        }
+    )
+
+    router.get('/supermarketList/:houseId', async (req, res) => {
+        const { houseId } = req.params;
+        const supermarketList = await prisma.houseProduct.findMany({
+          where: {
+            houseId: parseInt(houseId),
+            hasAlert: true,
+            
+          }
+        });
+        const filteredList = supermarketList.filter(product => product.quantity <= product.minimum)
+        res.json(filteredList);
+    })
+      
     return router
 }
 
