@@ -54,7 +54,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
             }
         })
         if (existingProduct) {
-            if (existingProduct.quantity > 1) {
+            if (existingProduct.quantity > 0) {
                 const updatedProduct = await prisma.houseProduct.update({
                     where: {
                         id: existingProduct.id
@@ -64,14 +64,6 @@ const houseProductRoutes = (prisma: PrismaClient) => {
                     }
                 })
                 res.json(updatedProduct)
-            }
-            else {
-                const deletedProduct = await prisma.houseProduct.delete({
-                    where: {
-                        id: existingProduct.id
-                    }
-                })
-                res.json(deletedProduct)
             }
         }
         else {
@@ -83,7 +75,22 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         const { houseId } = req.params
         const dueno = await prisma.houseProduct.findMany({
           where: {
-            houseId: parseInt(houseId)
+            houseId: parseInt(houseId),
+            //quantity mayor que 0
+            quantity: {
+                gt: 0
+                }
+          }
+        })
+        res.json(dueno)
+      })    
+
+      router.get('/pastProducts/:houseId', async (req, res) => {
+        const { houseId } = req.params
+        const dueno = await prisma.houseProduct.findMany({
+          where: {
+            houseId: parseInt(houseId),
+            quantity: 0
           }
         })
         res.json(dueno)
