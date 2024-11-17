@@ -44,6 +44,25 @@ const userRoutes = (prisma: PrismaClient) => {
         }
     })
 
+    //update user info
+    router.put('/:id', async (req, res) => {
+        const { id } = req.params
+        const { name, surname, email, password } = req.body
+        const updatedUser = await prisma.user.update({
+            where: {
+                id: parseInt(id)
+            },
+            data: {
+                name,
+                surname,
+                email,
+                password
+            }
+        })
+        res.json(updatedUser)
+        console.log('Usuario actualizado')
+    })
+
     return router
 }
 
