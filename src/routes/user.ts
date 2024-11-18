@@ -14,7 +14,6 @@ const userRoutes = (prisma: PrismaClient) => {
 
     //validate-token and return user
     router.post('/validatetoken', async (req, res) => {
-        console.log('hola')
         const token = req.headers.authorization?.split(' ')[1]
         if (!token) {
             return res.status(401).json({ error: 'Token not found' })
@@ -165,6 +164,9 @@ const userRoutes = (prisma: PrismaClient) => {
         const updatedUser = await prisma.user.update({
             where: {
                 id: parseInt(id),
+            },
+            include: {
+                ownedHouse: true
             },
             data: {
                 name,
