@@ -9,7 +9,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
     })
     router.post('/addProduct', async (req, res) => {
         console.log(req.body)
-        const {productId, name, houseId } = req.body
+        const {productId, name, houseId, brand } = req.body
         //Si el producto ya existe en la casa, aumentar la cantidad
         const existingProduct = await prisma.houseProduct.findFirst({
             where: {
@@ -32,10 +32,11 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         //Si no existe, crearlo
           const newProduct = await prisma.houseProduct.create({
               data: {
-                  houseId,
-                  productId,
-                  name,
-                  quantity: 1
+                houseId,
+                productId,
+                name,
+                brand,
+                quantity: 1
               }
           })
 
@@ -167,7 +168,12 @@ const houseProductRoutes = (prisma: PrismaClient) => {
             
           }
         });
-        const filteredList = supermarketList.filter(product => product.quantity <= product.minimum)
+        const filteredList = supermarketList
+        .filter(product => product.quantity <= product.minimum)
+        .map(product => ({
+            ...product,
+            quantityToBuy: product.minimum - product.quantity
+        }));
         res.json(filteredList);
     })
       
