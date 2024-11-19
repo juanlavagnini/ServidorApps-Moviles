@@ -1,5 +1,6 @@
 import { type PrismaClient } from "@prisma/client"
 import { type Express } from "express"
+import { validatePassword, validationEmail } from "../validationMiddleware";
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -54,7 +55,7 @@ const userRoutes = (prisma: PrismaClient) => {
     })*/
     
     // Registrar usuario
-    router.post("/signup", async (req, res) => {
+    router.post("/signup", validationEmail, validatePassword,async (req, res) => {
         const { name, surname, email, password } = req.body;
 
         try {
