@@ -45,6 +45,42 @@ const houseRoutes = (prisma: PrismaClient) => {
         res.json(update)
     })
 
+    //leave house : create a new house for the user where he is the owner and update the user houseId
+    router.post('/leave', async (req, res) => {
+        const {userId} = req.body
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        })
+        console.log(user)
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' })
+        }
+        const newHouse = await prisma.house.create({
+            data: {
+                name: `${user.name}'s house`
+            }
+        })
+        console.log(newHouse)
+        const update = await prisma.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                houseId: newHouse.id,
+                ownedHouse: {
+                    connect: {
+                        id: newHouse.id
+                    }
+                }
+            }
+        })
+        console.log(update)
+
+        res.json(update)
+    })
+
     return router
 }
 
