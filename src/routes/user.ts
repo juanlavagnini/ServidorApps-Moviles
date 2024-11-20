@@ -62,12 +62,25 @@ const userRoutes = (prisma: PrismaClient) => {
             // Hashear contraseña
             const hashedPassword = await bcrypt.hash(password, 10);
 
+            //primero creo una casa vacía
+            const newHouse = await prisma.house.create({
+                data: {
+                    name: `${name}'s house`
+                }
+            })
+
             const newUser = await prisma.user.create({
                 data: {
                     name,
                     surname,
                     email,
                     password: hashedPassword,
+                    houseId: newHouse.id,
+                    ownedHouse: {
+                        connect: {
+                            id: newHouse.id
+                        }
+                    }
                 },
             });
 
@@ -121,13 +134,7 @@ const userRoutes = (prisma: PrismaClient) => {
 
             res.json({
                 token,
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    surname: user.surname,
-                    ownedHouse: user.ownedHouse,
-                },
+                user: user,
             });
         } catch (error) {
             console.error(error);
