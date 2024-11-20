@@ -4,7 +4,12 @@ export function validatePassword(req: Request, res: Response, next: NextFunction
   const { password } = req.body;
 
   if (!password || password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-    return res.status(400).send({ errors: [{ message: "Password must be at least 8 characters long and include at least one uppercase letter and one number." }] });
+    return res.status(400).send(
+        { errors: [{ 
+            field: "password",
+            message: "Password must be at least 8 characters long and include at least one uppercase letter and one number."
+         }] 
+    });
   }
 
   next();
@@ -19,7 +24,9 @@ export function validationEmail(req: Request, res: Response, next: NextFunction)
   
     if (!email || !emailRegex.test(email)) {
       return res.status(400).json({
-        errors: [{ message: "Invalid email format." }],
+        errors: [{ 
+            field: "email",
+            message: "Invalid email format." }],
       });
     }
   
