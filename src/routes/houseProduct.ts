@@ -9,7 +9,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
     })
     router.post('/addProduct', async (req, res) => {
         console.log(req.body)
-        const {productId, name, houseId, brand } = req.body
+        const {productId, name, houseId, brand, quantity} = req.body
         //Si el producto ya existe en la casa, aumentar la cantidad
         const existingProduct = await prisma.houseProduct.findFirst({
             where: {
@@ -23,7 +23,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
                     id: existingProduct.id
                 },
                 data: {
-                    quantity: existingProduct.quantity + 1
+                    quantity: existingProduct.quantity + quantity
                 }
             })
             res.json(updatedProduct)
@@ -36,7 +36,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
                 productId,
                 name,
                 brand,
-                quantity: 1
+                quantity: quantity
               }
           })
 
@@ -109,6 +109,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
       })
 
     router.post('/updateAlert', async (req, res) => {
+        console.log(req.body)
         const { houseId, productId, minimum } = req.body
        console.log(minimum)
         const existingProduct = await prisma.houseProduct.findFirst({
@@ -117,13 +118,14 @@ const houseProductRoutes = (prisma: PrismaClient) => {
                 productId
             }
         })
+        
         if (existingProduct) {
             const updatedProduct = await prisma.houseProduct.update({
                 where: {
                     id: existingProduct.id
                 },
                 data: {
-                    minimum: minimum,
+                    minimum: 0 + minimum,
                     hasAlert : true
                 }
             })
@@ -169,7 +171,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
           }
         });
         const filteredList = supermarketList
-        .filter(product => product.quantity <= product.minimum)
+        .filter(product => product.quantity < product.minimum)
         .map(product => ({
             ...product,
             quantityToBuy: product.minimum - product.quantity

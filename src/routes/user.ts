@@ -58,6 +58,8 @@ const userRoutes = (prisma: PrismaClient) => {
     router.post("/signup", validationEmail, validatePassword,async (req, res) => {
         const { name, surname, email, password } = req.body;
 
+        const lowedEmail = email.toLowerCase();
+
         try {
             // Hashear contraseña
             const hashedPassword = await bcrypt.hash(password, 10);
@@ -73,7 +75,7 @@ const userRoutes = (prisma: PrismaClient) => {
                 data: {
                     name,
                     surname,
-                    email,
+                    email: lowedEmail,
                     password: hashedPassword,
                     houseId: newHouse.id,
                     ownedHouse: {
@@ -114,9 +116,11 @@ const userRoutes = (prisma: PrismaClient) => {
     router.post("/login", async (req, res) => {
         const { email, password } = req.body;
 
+        const lowedEmail = email.toLowerCase();
+
         try {
             const user = await prisma.user.findUnique({
-                where: { email },
+                where: { email: lowedEmail },
                 include: { ownedHouse: true },
             });
 
@@ -162,13 +166,11 @@ const userRoutes = (prisma: PrismaClient) => {
    // Actualizar información de usuario
    router.put("/:id", async (req, res) => {
     const { id } = req.params;
-    const { name, surname, email, password } = req.body;
+    const { name, surname, email} = req.body;
+
+    const lowedEmail = email.toLowerCase();
 
     try {
-        const hashedPassword = password
-            ? await bcrypt.hash(password, 10)
-            : undefined;
-
         const updatedUser = await prisma.user.update({
             where: {
                 id: parseInt(id),
@@ -179,8 +181,7 @@ const userRoutes = (prisma: PrismaClient) => {
             data: {
                 name,
                 surname,
-                email,
-                ...(hashedPassword && { password: hashedPassword }),
+                email: lowedEmail,
             },
         });
 
@@ -190,6 +191,43 @@ const userRoutes = (prisma: PrismaClient) => {
         res.status(500).json({ error: "Error al actualizar el usuario" });
     }
     });
+
+    //change password only, validate old password
+    router.put('/changepassword/:id', validatePassword, async (req, res) => {
+        const { id } = req.params
+        const { oldPassword, password } = req.body
+        const user = await prisma.user.findUnique({
+            where: {
+                id: parseInt(id)
+            }
+        })
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' })
+        }
+        console.log(user)
+        const isValidPassword = await bcrypt.compare(oldPassword, user.password)
+        if (!isValidPassword) {
+            console.log('Old password incorrect')
+            return res.status(400).send(
+                { errors: [{ 
+                    field: "password",
+                    message: "Old password incorrect."
+                 }] 
+            });
+        }
+        console.log(isValidPassword)
+        const hashedPassword = await bcrypt.hash(password, 10)
+        const updatedUser = await prisma.user.update({
+            where: {
+                id: parseInt(id)
+            },
+            data: {
+                password: hashedPassword
+            }
+        })
+        res.json(updatedUser)
+    })
+    
 
     return router
 }

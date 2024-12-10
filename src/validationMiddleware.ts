@@ -4,6 +4,7 @@ export function validatePassword(req: Request, res: Response, next: NextFunction
   const { password } = req.body;
 
   if (!password || password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+    console.log('pswd doesnt match')
     return res.status(400).send(
         { errors: [{ 
             field: "password",
