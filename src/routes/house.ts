@@ -58,8 +58,6 @@ const houseRoutes = (prisma: PrismaClient) => {
                     ownerId: delegated.id
                 }
             })
-            console.log(updateDelegated)
-            return res.json(updateDelegated)
         }
         else{
             if (guest.ownedHouse) {
@@ -68,10 +66,18 @@ const houseRoutes = (prisma: PrismaClient) => {
                     ownerId: guest.id
                 }
             })
-            return deleteHouse
             }
         }
-        res.json(update)
+
+        const updatedUser = await prisma.user.findUnique({
+            where: {
+                id: userId
+            },
+            include: {
+                ownedHouse: true
+            }
+        })
+        res.json(updatedUser)
     })
 
     //leave house : create a new house for the user where he is the owner and update the user houseId
@@ -132,9 +138,10 @@ const houseRoutes = (prisma: PrismaClient) => {
                         }
                     }
                 })
-                res.json(update)
             }
             else{
+                const originalHouse = user.houseId;
+
                 const newHouse = await prisma.house.create({
                     data: {
                         name: `${user.name}'s house`
@@ -155,16 +162,26 @@ const houseRoutes = (prisma: PrismaClient) => {
                         }
                     }
                 })
-                res.json(update)
+
                 if (user.ownedHouse) {
                     const deleteHouse = await prisma.house.delete({
                         where: {
-                            ownerId: user.id
+                            id: originalHouse
                         }
                     })
                 }
             }
         }
+        const updatedUser = await prisma.user.findUnique({
+            where: {
+                id: userId
+            },
+            include: {
+                ownedHouse: true
+            }
+        })
+        res.json(updatedUser)
+
     })
 
     //get members of a house by owner id
@@ -196,6 +213,43 @@ const houseRoutes = (prisma: PrismaClient) => {
         }
         else{
             res.status(404).json({ error: 'House not found' })
+        }
+    })
+
+    //Remove a member from a house
+    router.post('/removeMember', async (req, res) => {
+        const {removedUserId} = req.body
+        console.log("Llego")
+        console.log(removedUserId)
+        const user = await prisma.user.findUnique({
+            where: {
+                id: Number(removedUserId)
+            }
+        })
+        if (user) {
+            const newHouse = await prisma.house.create({
+                data: {
+                    name: `${user.name}'s house`
+                }
+            })
+            console.log(newHouse)
+            const updatedUser = await prisma.user.update({
+                where: {
+                    id: Number(removedUserId)
+                },
+                data: {
+                    houseId: newHouse.id,
+                    ownedHouse: {
+                        connect: {
+                            id: newHouse.id
+                        }
+                    }
+                }
+            })
+            res.json(updatedUser)
+        }
+        else{
+            res.status(404).json({ error: 'User not found' })
         }
     })
 

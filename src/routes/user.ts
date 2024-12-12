@@ -8,10 +8,6 @@ const SECRET_KEY = process.env.SECRET_KEY;
 
 const userRoutes = (prisma: PrismaClient) => {
     const router = require('express').Router()
-    router.get('/', async (req, res) => {
-        const users = await prisma.user.findMany()
-        res.json(users)
-    })
 
     //validate-token and return user
     router.post('/validatetoken', async (req, res) => {
@@ -146,23 +142,24 @@ const userRoutes = (prisma: PrismaClient) => {
         }
     });
 
-    /*router.put('/:id', async (req, res) => {
-        const { id } = req.params
-        const { name, surname, email, password } = req.body
-        const updatedUser = await prisma.user.update({
+    //Refresh user data
+    router.post('/', async (req, res) => {
+        const { id } = req.body
+        const user = await prisma.user.findUnique({
             where: {
                 id: parseInt(id)
             },
-            data: {
-                name,
-                surname,
-                email,
-                password
+            include: {
+                ownedHouse: true
             }
         })
-        res.json(updatedUser)
-        console.log('Usuario actualizado')
-    })*/
+        if (user) {
+            res.json(user)
+        } else {
+            res.status(404).json({ error: 'User not found' })
+        }
+    })
+
    // Actualizar información de usuario
    router.put("/:id", async (req, res) => {
     const { id } = req.params;
