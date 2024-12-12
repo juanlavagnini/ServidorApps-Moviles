@@ -5,7 +5,7 @@ const houseRoutes = (prisma: PrismaClient) => {
     const router = require('express').Router()
     //Join house with user
     router.post('/join', async (req, res) => {
-        const {ownerEmail, userId} = req.body
+        const {ownerEmail, userId, delegatedOwner} = req.body
         const owner = await prisma.user.findUnique({
             where: {
                 email: ownerEmail
@@ -18,6 +18,9 @@ const houseRoutes = (prisma: PrismaClient) => {
         const guest = await prisma.user.findUnique({
             where: {
                 id: userId
+            },
+            include: {
+                ownedHouse: true
             }
         })
         console.log(guest)
@@ -33,52 +36,167 @@ const houseRoutes = (prisma: PrismaClient) => {
                 ownedHouse: undefined
             }
         })
-        console.log(update)
-        //delete old house
-        const deleteHouse = await prisma.house.delete({
-            where: {
-                ownerId: guest.id
-            }
-        })
-        console.log(deleteHouse)
 
+        console.log(update)
+        //Si me mandan un delegado, cambio la casa al delegado
+        //Si no pregunto si hay mas miembros, si no hay mas elimino la casa
+        if (delegatedOwner!='') {
+            const delegated = await prisma.user.findUnique({
+                where: {
+                    id: delegatedOwner
+                }
+            })
+            console.log(delegated)
+            if (!delegated) {
+                return res.status(404).json({ error: 'Delegated not found' })
+            }
+            const updateDelegated = await prisma.house.update({
+                where: {
+                    id: owner.houseId
+                },
+                data: {
+                    ownerId: delegated.id
+                }
+            })
+            console.log(updateDelegated)
+            return res.json(updateDelegated)
+        }
+        else{
+            if (guest.ownedHouse) {
+            const deleteHouse = await prisma.house.delete({
+                where: {
+                    ownerId: guest.id
+                }
+            })
+            return deleteHouse
+            }
+        }
         res.json(update)
     })
 
     //leave house : create a new house for the user where he is the owner and update the user houseId
     router.post('/leave', async (req, res) => {
-        const {userId} = req.body
+        const {userId, delegatedUserId} = req.body
+        console.log(userId)
+        console.log(delegatedUserId)
         const user = await prisma.user.findUnique({
             where: {
-                id: userId
-            }
-        })
-        console.log(user)
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' })
-        }
-        const newHouse = await prisma.house.create({
-            data: {
-                name: `${user.name}'s house`
-            }
-        })
-        console.log(newHouse)
-        const update = await prisma.user.update({
-            where: {
-                id: userId
+                id: Number(userId)
             },
-            data: {
-                houseId: newHouse.id,
-                ownedHouse: {
-                    connect: {
-                        id: newHouse.id
+            include: {
+                ownedHouse: true
+            }
+        })
+        if (user){
+            const oldHouse = await prisma.house.findUnique({
+                where: {
+                    id: user.houseId
+                }
+            })
+            if (delegatedUserId!='' && user.ownedHouse) {
+                const delegated = await prisma.user.findUnique({
+                    where: {
+                        id: Number(delegatedUserId)
                     }
+                })
+                console.log(delegated)
+                if (!delegated) {
+                    return res.status(404).json({ error: 'Delegated not found' })
+                }
+                const updateDelegated = await prisma.house.update({
+                    where: {
+                        id: oldHouse?.id
+                    },
+                    data: {
+                        ownerId: delegated.id
+                    }
+                })
+                console.log(updateDelegated)
+                const newHouse = await prisma.house.create({
+                    data: {
+                        name: `${user.name}'s house`
+                    }
+                })
+                console.log(newHouse)
+        
+                const update = await prisma.user.update({
+                    where: {
+                        id: userId
+                    },
+                    data: {
+                        houseId: newHouse.id,
+                        ownedHouse: {
+                            connect: {
+                                id: newHouse.id
+                            }
+                        }
+                    }
+                })
+                res.json(update)
+            }
+            else{
+                const newHouse = await prisma.house.create({
+                    data: {
+                        name: `${user.name}'s house`
+                    }
+                })
+                console.log(newHouse)
+        
+                const update = await prisma.user.update({
+                    where: {
+                        id: userId
+                    },
+                    data: {
+                        houseId: newHouse.id,
+                        ownedHouse: {
+                            connect: {
+                                id: newHouse.id
+                            }
+                        }
+                    }
+                })
+                res.json(update)
+                if (user.ownedHouse) {
+                    const deleteHouse = await prisma.house.delete({
+                        where: {
+                            ownerId: user.id
+                        }
+                    })
                 }
             }
-        })
-        console.log(update)
+        }
+    })
 
-        res.json(update)
+    //get members of a house by owner id
+    router.post('/members', async (req, res) => {
+        const {ownerId} = req.body
+        console.log(ownerId) 
+        const house = await prisma.house.findUnique({
+            where: {
+                ownerId: Number(ownerId)
+            }
+        })
+        console.log(house)
+        if (house) {
+            console.log('house found')
+            const members = await prisma.user.findMany({
+                where: {
+                    houseId: house.id
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    surname: true,
+                }
+            })
+            //eliminar al propio owner
+            const membersNotOwners = members.filter(member => member.id != ownerId)
+            console.log(membersNotOwners)
+            res.json(membersNotOwners)
+        }
+        else{
+            res.status(404).json({ error: 'House not found' })
+        }
     })
 
     return router

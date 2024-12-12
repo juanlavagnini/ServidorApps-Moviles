@@ -14,7 +14,7 @@ model User {
   surname  String
   password String
   house    House?   @relation(fields: [houseId], references: [id])
-  houseId  Int ?    
+  houseId  Int     
   ownedHouse House? @relation("HouseOwner") 
 }
 
