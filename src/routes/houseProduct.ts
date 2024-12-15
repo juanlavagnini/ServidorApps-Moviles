@@ -136,6 +136,31 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         }
     )
 
+    //Update product info
+    router.post('/updateProductInfo', async (req, res) => {
+        const { houseId, productId, name, brand } = req.body
+        const existingProduct = await prisma.houseProduct.findFirst({
+            where: {
+                houseId,
+                productId
+            }
+        })
+        if (existingProduct) {
+            const updatedProduct = await prisma.houseProduct.update({
+                where: {
+                    id: existingProduct.id
+                },
+                data: {
+                    name,
+                    brand
+                }
+            })
+            res.json(updatedProduct)
+        } else {
+            res.status(404).json({ error: "Product not found" })
+        }
+    })
+
     router.post('/removeAlert', async (req, res) => {
         const { houseId, productId } = req.body
         const existingProduct = await prisma.houseProduct.findFirst({
