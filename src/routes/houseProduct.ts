@@ -1,5 +1,7 @@
 import { type PrismaClient } from "@prisma/client"
 import { type Express } from "express"
+import { validateProductBrand, validateProductName, validateQuantity } from "../validationMiddleware"
+import { validateHeaderName } from "node:http"
 
 const houseProductRoutes = (prisma: PrismaClient) => {
     const router = require('express').Router()
@@ -7,7 +9,7 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         const houseProduct = await prisma.houseProduct.findMany()
         res.json(houseProduct)
     })
-    router.post('/addProduct', async (req, res) => {
+    router.post('/addProduct', validateQuantity, validateProductBrand, validateProductName, async (req, res) => {
         console.log(req.body)
         const {productId, name, houseId, brand, quantity} = req.body
         //Si el producto ya existe en la casa, aumentar la cantidad
@@ -135,6 +137,31 @@ const houseProductRoutes = (prisma: PrismaClient) => {
         }
         }
     )
+
+    //Update product info
+    router.post('/updateProductInfo',validateProductName,validateProductBrand, async (req, res) => {
+        const { houseId, productId, name, brand } = req.body
+        const existingProduct = await prisma.houseProduct.findFirst({
+            where: {
+                houseId,
+                productId
+            }
+        })
+        if (existingProduct) {
+            const updatedProduct = await prisma.houseProduct.update({
+                where: {
+                    id: existingProduct.id
+                },
+                data: {
+                    name,
+                    brand
+                }
+            })
+            res.json(updatedProduct)
+        } else {
+            res.status(404).json({ error: "Product not found" })
+        }
+    })
 
     router.post('/removeAlert', async (req, res) => {
         const { houseId, productId } = req.body
